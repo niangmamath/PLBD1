@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Dashboard Énergie IA - Casablanca</title>
+  <style>
+    body { font-family: Arial, sans-serif; background: #eef6fa; color: #222; margin: 0; padding: 40px;}
+    h1 { color: #126d9b; }
+    .container { max-width: 800px; margin: 0 auto; }
+    .card { background: #fff; border-radius: 15px; box-shadow: 0 2px 10px #0001; margin-bottom: 30px; padding: 28px;}
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px;}
+    label { font-weight: bold; }
+    input[type="number"] { width: 100px; margin: 4px;}
+    button { background: #29abe2; color: #fff; border: none; border-radius: 8px; padding: 10px 20px; font-size: 1em; cursor: pointer;}
+    .result { margin-top: 15px; color: #16547a; font-size: 1.1em;}
+    .title { margin-bottom: 0; }
+    .subtitle { margin-top: 4px; color: #888; font-size: 0.95em;}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Dashboard Prédiction Énergie IA</h1>
+
+    <!-- Section pour la consommation -->
+    <div class="card">
+      <h2 class="title">Prédiction de la consommation (Wh, prochaine heure)</h2>
+      <div class="subtitle">Remplis les paramètres d'entrée :</div>
+      <form id="form-conso">
+        <div class="grid">
+          <label>Température <input type="number" step="0.1" id="c-temperature" required></label>
+          <label>Vent <input type="number" step="0.1" id="c-vent" required></label>
+          <label>Humidité <input type="number" step="0.1" id="c-humidite" required></label>
+          <label>Férié <input type="number" min="0" max="1" id="c-ferie" required></label>
+          <label>Jour semaine (1=lundi...7=dim) <input type="number" min="1" max="7" id="c-jour" required></label>
+          <label>Prod. Solaire <input type="number" step="0.1" id="c-solaire" required></label>
+          <label>Prod. Eolienne <input type="number" step="0.1" id="c-eolienne" required></label>
+        </div>
+        <button type="submit">Prédire la consommation</button>
+      </form>
+      <div class="result" id="result-conso"></div>
+    </div>
+
+    <!-- Section pour la production solaire -->
+    <div class="card">
+      <h2 class="title">Prédiction de la production solaire (Wh, prochaine heure)</h2>
+      <form id="form-sol">
+        <div class="grid">
+          <label>Température <input type="number" step="0.1" id="s-temperature" required></label>
+          <label>Vent <input type="number" step="0.1" id="s-vent" required></label>
+          <label>Humidité <input type="number" step="0.1" id="s-humidite" required></label>
+          <label>Férié <input type="number" min="0" max="1" id="s-ferie" required></label>
+          <label>Jour semaine (1=lundi...7=dim) <input type="number" min="1" max="7" id="s-jour" required></label>
+        </div>
+        <button type="submit">Prédire la prod. solaire</button>
+      </form>
+      <div class="result" id="result-sol"></div>
+    </div>
+
+    <!-- Section pour la production éolienne -->
+    <div class="card">
+      <h2 class="title">Prédiction de la production éolienne (Wh, prochaine heure)</h2>
+      <form id="form-eol">
+        <div class="grid">
+          <label>Température <input type="number" step="0.1" id="e-temperature" required></label>
+          <label>Vent <input type="number" step="0.1" id="e-vent" required></label>
+          <label>Humidité <input type="number" step="0.1" id="e-humidite" required></label>
+          <label>Férié <input type="number" min="0" max="1" id="e-ferie" required></label>
+          <label>Jour semaine (1=lundi...7=dim) <input type="number" min="1" max="7" id="e-jour" required></label>
+        </div>
+        <button type="submit">Prédire la prod. éolienne</button>
+      </form>
+      <div class="result" id="result-eol"></div>
+    </div>
+  </div>
+
+  <script>
+    // Consommation
+    document.getElementById('form-conso').onsubmit = async function(e) {
+      e.preventDefault();
+      let features = [
+        parseFloat(document.getElementById('c-temperature').value),
+        parseFloat(document.getElementById('c-vent').value),
+        parseFloat(document.getElementById('c-humidite').value),
+        parseInt(document.getElementById('c-ferie').value),
+        parseInt(document.getElementById('c-jour').value),
+        parseFloat(document.getElementById('c-solaire').value),
+        parseFloat(document.getElementById('c-eolienne').value)
+      ];
+      const resp = await fetch('/api/predict/consommation', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({features: features})
+      });
+      const data = await resp.json();
+      document.getElementById('result-conso').textContent = "Consommation prédite : " + data.prediction.toFixed(2) + " Wh";
+    };
+
+    // Solaire
+    document.getElementById('form-sol').onsubmit = async function(e) {
+      e.preventDefault();
+      let features = [
+        parseFloat(document.getElementById('s-temperature').value),
+        parseFloat(document.getElementById('s-vent').value),
+        parseFloat(document.getElementById('s-humidite').value),
+        parseInt(document.getElementById('s-ferie').value),
+        parseInt(document.getElementById('s-jour').value)
+      ];
+      const resp = await fetch('/api/predict/solaire', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({features: features})
+      });
+      const data = await resp.json();
+      document.getElementById('result-sol').textContent = "Production solaire prédite : " + data.prediction.toFixed(2) + " Wh";
+    };
+
+    // Eolienne
+    document.getElementById('form-eol').onsubmit = async function(e) {
+      e.preventDefault();
+      let features = [
+        parseFloat(document.getElementById('e-temperature').value),
+        parseFloat(document.getElementById('e-vent').value),
+        parseFloat(document.getElementById('e-humidite').value),
+        parseInt(document.getElementById('e-ferie').value),
+        parseInt(document.getElementById('e-jour').value)
+      ];
+      const resp = await fetch('/api/predict/eolienne', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({features: features})
+      });
+      const data = await resp.json();
+      document.getElementById('result-eol').textContent = "Production éolienne prédite : " + data.prediction.toFixed(2) + " Wh";
+    };
+  </script>
+</body>
+</html>
