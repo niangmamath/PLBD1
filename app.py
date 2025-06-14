@@ -36,5 +36,8 @@ def predict_eol():
     pred = float(model_eol.predict(np.array(features).reshape(1, -1))[0])
     return jsonify({'prediction': pred})
 
+import os
+
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=10000)
+    port = int(os.environ.get("PORT", 10000))
+    app.run(debug=True, host='0.0.0.0', port=port)
